@@ -1,0 +1,30 @@
+name: Auto Comment and Close
+
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  comment_and_close:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment and close issue if it has feedback or suggestion label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+            if (labels.includes('feedback') || labels.includes('suggestion')) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: issue.number,
+                body: 'Thank you for your contribution!'
+              });
+              await github.rest.issues.update({
+                ...context.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            } else {
+              console.log('Issue does not have feedback or suggestion label; no action taken');
+            }
